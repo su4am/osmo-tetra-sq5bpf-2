@@ -11,7 +11,7 @@ Note: the new osmo-tetra versions will coredump with a lot of real world
 traffic, so this fork will do it too.
 
 
-Basically i'm re-adding ma patches for telive to the new version.
+Basically i'm re-adding my patches for telive to the new version.
 
 This is work in progress, don't expect it to work, and if it does don't
 expect it to do anything useful or not break your stuff. 
@@ -23,17 +23,25 @@ thr patched tetra codec which can be installed via the script from here:
 https://github.com/sq5bpf/install-tetra-codec
 
 As far as i know this is the first publically avaliable source which will
-decrypt voice traffic.
+decrypt voice traffic.  The easiest way to listen is to use telive-2:
+https://github.com/sq5bpf/telive-2
+
 
 And i have also added support for using the TEA1 shortened 32bit key.
 
 Note: this code does not break encryption, you still need to have the keys.
 
+Key recovery for TEA1 can be done with teatime:
+https://github.com/sq5bpf/teatime 
 
-Also note that this requires telive-2.
+
+
+
 
 Jacek / SQ5BPF
 
+
+Original README.md below:
 
 
 TETRA MAC/PHY layer experimentation code
