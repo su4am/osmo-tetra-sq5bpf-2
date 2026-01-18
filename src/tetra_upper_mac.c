@@ -354,10 +354,9 @@ static int rx_resrc(struct tetra_tmvsap_prim *tmvp, struct tetra_mac_state *tms)
 
 out:
 	printf("\n");
-
-	if (rsd.encryption_mode && rsd.is_encrypted && (msgb_l2len(msg)>=32)) {
-		/* show possible inputs to https://github.com/hassanTripleA/tea_crack_CT/ --sq5bpf */	
 		struct tetra_tdma_time tt = t_phy_state.time;
+	if (rsd.encryption_mode && rsd.is_encrypted /*&& (tt.tn==1)*/ && (msgb_l2len(msg)>=32) /* && (tmpdu_offset==49) */ ) {
+		/* show possible inputs to https://github.com/sq5bpf/teatime --sq5bpf */	
 		uint32_t ct=0;
 		uint8_t *cur = msg->l2h;
 
@@ -368,7 +367,8 @@ out:
 			cur++;
 		}
 
-		printf("SQ5BPF: (%i/%i/%i) len:%i cckid:%i key recovery candidate: [1 %i %i %i %i 0 %8.8x]\n",tcs->hn,tt.mn,tt.fn,msgb_l2len(msg),tcs->cck_id,tcs->hn,tt.mn,tt.fn,tt.tn,ct);
+		/* FIXME: direction hardcoded to 0 (downlink) --sq5bpf */
+		printf("SQ5BPF: (%i/%i/%i) len:%i cckid:%i key recovery candidate: [%i %i %i %i %i %8.8x] Addr: [%s]\n",tcs->hn,tt.mn,tt.fn,msgb_l2len(msg),tcs->cck_id,tcs->hn,tt.mn,tt.fn,tt.tn,0,ct,tetra_addr_dump(&rsd.addr));
 
 	}
 
