@@ -51,6 +51,7 @@ uint32_t bits_to_uint(const uint8_t *bits, unsigned int len);
 #define HACK_NUM_STRUCTS 256
 struct tetra_hack_struct {
         uint32_t ssi;
+	int voice_encr; /* encryption mode for current voice call */
         uint32_t ssi2;
         time_t lastseen;
         int is_encr;
@@ -117,6 +118,7 @@ struct tetra_mac_state {
 	int tsn;	/* Timeslot number */
 	int usage_marker; /* Usage marker (if addressed)*/
 	int addr_type;
+	int voice_encr; /* 0=plain, 2=TEA1 encrypted */
 };
 
 void tetra_mac_state_init(struct tetra_mac_state *tms);

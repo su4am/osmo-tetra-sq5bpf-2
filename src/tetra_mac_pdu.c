@@ -61,6 +61,8 @@ void macpdu_decode_sysinfo(struct tetra_si_decoded *sid, const uint8_t *si_bits)
 		sid->cck_id = bits_to_uint(cur, 16);
 	else
 		sid->hyperframe_number = bits_to_uint(cur, 16);
+	/* Always extract HN from this field for crypto IV generation */
+	sid->hyperframe_number = bits_to_uint(cur, 16);
 	sid->option_field      = bits_to_uint(cur,  2); cur +=  2;
 
 	switch (sid->option_field) {

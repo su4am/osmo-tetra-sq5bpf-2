@@ -117,6 +117,8 @@ static int rx_bcast(struct tetra_tmvsap_prim *tmvp, struct tetra_mac_state *tms)
 	memset(&sid, 0, sizeof(sid));
 	macpdu_decode_sysinfo(&sid, msg->l1h);
 	tmvp->u.unitdata.tdma_time.hn = sid.hyperframe_number;
+	/* BNCH always contains real HN (unlike SB1 which has CCK_ID when cck_valid_no_hf=1) */
+	tcs->hn = sid.hyperframe_number;
 
 	dl_freq = tetra_dl_carrier_hz(sid.freq_band,
 				      sid.main_carrier,
@@ -184,13 +186,15 @@ static int rx_bcast(struct tetra_tmvsap_prim *tmvp, struct tetra_mac_state *tms)
 	/* Update crypto state */
 	tcs->la = sid.mle_si.la;
 	tcs->cn = sid.main_carrier; /* FIXME this won't work when not tuned to the main carier */
+	/* Override CN from TETRA_HACK_CARRIER env var if set */
+	{ char *_e = getenv("TETRA_HACK_CARRIER"); if (_e) tcs->cn = atoi(_e); }
+	/* Override CN with actual tuned carrier if different from main carrier */
+	/* Do NOT update HN from SB1 SYNC - contains CCK_ID when cck_valid_no_hf=1 */
 	if (sid.cck_valid_no_hf) {
 		if (sid.cck_id != tcs->cck_id) {
 			tcs->cck_id = sid.cck_id;
 			update_current_cck(tcs);
 		}
-	} else {
-		tcs->hn = sid.hyperframe_number;
 	}
 
 	return -1; /* FIXME check this indeed fills slot */
@@ -269,7 +273,17 @@ static int rx_resrc(struct tetra_tmvsap_prim *tmvp, struct tetra_mac_state *tms)
 	}
 
 	/* Decrypt buffer if encrypted and key available */
+	uint32_t raw_ct=0;
 	if (rsd.is_encrypted && tcdb->num_keys) {
+		/* Save raw ciphertext before decryption --fix */
+		{
+			uint8_t *cur = msg->l1h + tmpdu_offset;
+			int _i;
+			for(_i=0;_i<32 && (cur+_i) < msg->tail;_i++) {
+				raw_ct<<=1;
+				raw_ct|=(*(cur+_i))&1;
+			}
+		}
 		decrypt_identity(tcs, &rsd.addr);
 		key = get_ksg_key(tcs, rsd.addr.ssi);
 
@@ -312,6 +326,7 @@ static int rx_resrc(struct tetra_tmvsap_prim *tmvp, struct tetra_mac_state *tms)
 		goto out;
 	}
 	tms->ssi = rsd.addr.ssi;
+	tms->voice_encr = rsd.encryption_mode;
 	tms->usage_marker = rsd.addr.usage_marker;
 	tms->addr_type = rsd.addr.type;
 
@@ -355,17 +370,9 @@ static int rx_resrc(struct tetra_tmvsap_prim *tmvp, struct tetra_mac_state *tms)
 out:
 	printf("\n");
 		struct tetra_tdma_time tt = t_phy_state.time;
-	if (rsd.encryption_mode && rsd.is_encrypted /*&& (tt.tn==1)*/ && (msgb_l2len(msg)>=32) /* && (tmpdu_offset==49) */ ) {
+	if (rsd.encryption_mode && (msgb_l2len(msg)>=32) /* always generate candidates for encrypted frames */) {
 		/* show possible inputs to https://github.com/sq5bpf/teatime --sq5bpf */	
-		uint32_t ct=0;
-		uint8_t *cur = msg->l2h;
-
-		int i;
-		for(i=0;i<32;i++) {
-			ct<<=1;
-			ct|=*cur;
-			cur++;
-		}
+		uint32_t ct=raw_ct; /* use saved raw ciphertext --fix */
 
 		/* FIXME: direction hardcoded to 0 (downlink) --sq5bpf */
 		printf("SQ5BPF: (%i/%i/%i) len:%i cckid:%i key recovery candidate: [%i %i %i %i %i %8.8x] Addr: [%s]\n",tcs->hn,tt.mn,tt.fn,msgb_l2len(msg),tcs->cck_id,tcs->hn,tt.mn,tt.fn,tt.tn,0,ct,tetra_addr_dump(&rsd.addr));

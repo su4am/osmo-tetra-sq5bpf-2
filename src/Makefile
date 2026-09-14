@@ -1,4 +1,4 @@
-CFLAGS=-g -O3 -Wall `pkg-config --cflags libosmocore 2> /dev/null` -I.
+CFLAGS=-g -O3 -Wall -std=gnu99 `pkg-config --cflags libosmocore 2> /dev/null` -I.
 LDLIBS=`pkg-config --libs libosmocore 2> /dev/null` -losmocore -lm
 
 all: conv_enc_test crc_test tetra-rx float_to_bits tunctl testsds

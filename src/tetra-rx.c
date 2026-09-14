@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -98,6 +99,10 @@ void show_help(char *prog)
 
 
 
+static char *g_keystore_path = NULL;
+static volatile int g_reload_keys = 0;
+static void sighup_handler(int sig) { g_reload_keys = 1; }
+
 int main(int argc, char **argv)
 {
 	int fd;
@@ -138,7 +143,8 @@ int main(int argc, char **argv)
 				tms->dumpdir = strdup(optarg);
 				break;
 			case 'k':
-				load_keystore(optarg);
+				g_keystore_path = optarg;
+			load_keystore(optarg);
 				break;
 			case 'i':
 				accept_float = 1;
@@ -222,7 +228,14 @@ int main(int argc, char **argv)
 #define MAXVAL 5.0
 
 
+	signal(SIGHUP, sighup_handler);
 	while (1) {
+		if (g_reload_keys && g_keystore_path) {
+			g_reload_keys = 0;
+			load_keystore(g_keystore_path);
+			update_current_cck(tms->tcs);
+			puts("tetra_crypto: keystore reloaded and CCK updated");
+		}
 		uint8_t buf[BUFLEN];
 		int len;
 

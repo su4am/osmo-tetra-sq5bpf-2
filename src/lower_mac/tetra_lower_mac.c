@@ -302,7 +302,7 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 	}
 
 	/* If this is a traffic channel, dump. */
-	if (tms->cur_burst.is_traffic && (type == TPSAP_T_SCH_F || (blk_num == BLK_2 && !tms->cur_burst.blk2_stolen))) {
+	if (tms->cur_burst.is_traffic && type == TPSAP_T_SCH_F) { /* Only write SCH/F voice frames */
 		char fname[PATH_MAX];
 		int16_t block[690];
 		FILE *f;
@@ -330,7 +330,9 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 		/* this requires a patched tetra codec from here: https://github.com/sq5bpf/install-tetra-codec */
 		int ks_num_bits=2*137;
 		uint8_t ks[ks_num_bits];
-		if (get_voice_keystream(tcs,&tcd->time,ks,ks_num_bits)) {
+		/* Use encryption mode from call_recorder (telive D-SETUP ENCR field) */
+		{ static int cur_encr = 0; FILE *_sf = fopen("/tmp/current_call.txt","r"); int _ssi=0; if(_sf){fscanf(_sf,"%d %d",&_ssi,&cur_encr);fclose(_sf);}
+		if (cur_encr > 0 && get_voice_keystream(tcs,&tcd->time,ks,ks_num_bits)) {
 			uint16_t a;
 			int l=461;
 			a=0;
@@ -349,6 +351,7 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 			block[l]=a;
 
 			decrypted=1;
+		}
 
 			/* for debugging, change the if(0) to whatever you want to dump --sq5bpf */
 			if (0) {
@@ -371,9 +374,35 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 		}
 
 		if (tms->dumpdir) {
-		/* Open target file */
-		snprintf(fname, sizeof(fname), "%s/traffic_%d_%d.out", tms->dumpdir,
-			tms->cur_burst.is_traffic, tms->tsn);
+		/* Open per-call file based on active SSI from call_recorder */
+		{
+			static int cur_ssi = 0;
+			static int cur_encr = 0;
+			static int cur_callid = 0;
+			static int cur_idx = 0;
+			/* Read every frame for fast response to call changes */
+			{
+				FILE *sf = fopen("/tmp/current_call.txt", "r");
+				if (sf) { fscanf(sf, "%d %d %d %d", &cur_ssi, &cur_encr, &cur_callid, &cur_idx); fclose(sf); }
+			}
+			/* Log is_traffic for call_recorder to learn */
+			if (cur_ssi > 0 && tms->cur_burst.is_traffic > 3) {
+				static int last_logged = -1;
+				if (tms->cur_burst.is_traffic != last_logged) {
+					last_logged = tms->cur_burst.is_traffic;
+					FILE *tf = fopen("/tmp/cur_traffic_idx.txt", "w");
+					if (tf) { fprintf(tf, "%d\n"
+, tms->cur_burst.is_traffic); fclose(tf); }
+				}
+			}
+			/* Write only if SSI matches AND physical TN matches assigned TN */
+			if (cur_ssi > 0 && (cur_idx == 0 || t_phy_state.time.tn == cur_idx))
+				snprintf(fname, sizeof(fname), "%s/call_%d_%d_%d.out",
+					tms->dumpdir, cur_callid, cur_ssi, tms->tsn);
+			else
+				snprintf(fname, sizeof(fname), "%s/traffic_%d_%d.out",
+					tms->dumpdir, tms->cur_burst.is_traffic, tms->tsn);
+		}
 		f = fopen(fname, "ab");
 		if (!f) {
 			fprintf(stderr, "Could not open dump file %s for writing: %s\n", fname, strerror(errno));

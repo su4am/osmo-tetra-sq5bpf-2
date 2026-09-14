@@ -1,3 +1,4 @@
+#include <talloc.h>
 /* Cryptography related helper, key management and wrapper functions */
 /*
  * Copyright (C) 2023 Midnight Blue B.V.
