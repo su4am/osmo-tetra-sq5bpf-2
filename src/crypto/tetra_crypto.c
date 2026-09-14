@@ -266,22 +266,20 @@ bool decrypt_mac_element(struct tetra_crypto_state *tcs, struct tetra_tmvsap_pri
 
 bool get_voice_keystream(struct tetra_crypto_state *tcs, struct tetra_tdma_time *tdma_time, uint8_t *ks,int ks_num_bits)
 {
-	/* TODO FIXME implement proper key selection for voice blocks */
-	struct tetra_key *key = tcs->cck;
-	if (!key)
+	if (tcs->cn < 0 || tcs->la < 0 || tcs->cc < 0)
 		return false;
 
-	if (tcs->cn < 0 || tcs->la < 0 || tcs->cc < 0) {
-		printf("tetra_crypto: can't compute TB5 due to incomplete network info (carr %d la %d cc %d)\n",
-			tcs->cn, tcs->la, tcs->cc);
-		return false;
+	/* Try all matching keys until one works */
+	for (int i = 0; i < tcdb->num_keys; i++) {
+		struct tetra_key *key = &tcdb->keys[i];
+		if (key->mcc != tcs->mcc || key->mnc != tcs->mnc || key->key_num != tcs->cck_id)
+			continue;
+		if (key->key_type != KEYTYPE_CCK_SCK && key->key_type != KEYTYPE_SHORT32)
+			continue;
+		if (generate_keystream(tcs, key, tdma_time, ks_num_bits, ks))
+			return true;
 	}
-
-	/* Generate keystream */
-	if (!generate_keystream(tcs, key, tdma_time, ks_num_bits, ks))
-		return false;
-
-	return true;
+	return false;
 }
 
 bool decrypt_voice_timeslot(struct tetra_crypto_state *tcs, struct tetra_tdma_time *tdma_time, int16_t *type1_block)
