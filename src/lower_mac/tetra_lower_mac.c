@@ -330,8 +330,13 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 		/* this requires a patched tetra codec from here: https://github.com/sq5bpf/install-tetra-codec */
 		int ks_num_bits=2*137;
 		uint8_t ks[ks_num_bits];
-		/* Use encryption mode from call_recorder (telive D-SETUP ENCR field) */
-		/* Only decrypt if current call is encrypted */
+		/* Only apply keystream when current call is encrypted */
+		{ static int _enc=0; static struct timespec _lt={0}; struct timespec _nt;
+		  clock_gettime(CLOCK_MONOTONIC,&_nt);
+		  if((_nt.tv_sec-_lt.tv_sec)*1000+(_nt.tv_nsec-_lt.tv_nsec)/1000000>=100){
+		    _lt=_nt; FILE *_sf=fopen("/tmp/current_call.txt","r");
+		    if(_sf){int _s=0; fscanf(_sf,"%d %d",&_s,&_enc); fclose(_sf);}}
+		  if(_enc==0) goto skip_ks; }
 		if (get_voice_keystream(tcs,&tcd->time,ks,ks_num_bits)) {
 			uint16_t a;
 			int l=461;
@@ -352,6 +357,7 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 
 			decrypted=1;
 		}
+		skip_ks:;
 
 			/* for debugging, change the if(0) to whatever you want to dump --sq5bpf */
 			if (0) {
