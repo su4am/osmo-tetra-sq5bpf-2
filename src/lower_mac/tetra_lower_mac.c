@@ -332,10 +332,7 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 		uint8_t ks[ks_num_bits];
 		/* Use encryption mode from call_recorder (telive D-SETUP ENCR field) */
 		/* Only decrypt if current call is encrypted */
-		int cur_encr2=0;
-		{ FILE *_sf=fopen("/tmp/current_call.txt","r"); int _ssi=0;
-		  if(_sf){fscanf(_sf,"%d %d",&_ssi,&cur_encr2);fclose(_sf);} }
-		if (cur_encr2 > 0 && get_voice_keystream(tcs,&tcd->time,ks,ks_num_bits)) {
+		if (get_voice_keystream(tcs,&tcd->time,ks,ks_num_bits)) {
 			uint16_t a;
 			int l=461;
 			a=0;
@@ -423,8 +420,8 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 		fclose(f);
 		}
 
-                /* send voice frames for further processing --sq5bpf */
-                if (tetra_hack_live_socket) {
+                /* send voice frames - only when encrypted call active */
+                if (tetra_hack_live_socket && decrypted) {
                         sprintf(tmpstr,"TRA:%2.2x RX:%2.2x DECR:%i\0",tms->cur_burst.is_traffic,tetra_hack_rxid,decrypted);
                         memcpy(tmpstr+20,block,sizeof(block));
 
