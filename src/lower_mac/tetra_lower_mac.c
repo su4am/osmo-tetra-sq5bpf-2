@@ -331,7 +331,11 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 		int ks_num_bits=2*137;
 		uint8_t ks[ks_num_bits];
 		/* Use encryption mode from call_recorder (telive D-SETUP ENCR field) */
-		if (get_voice_keystream(tcs,&tcd->time,ks,ks_num_bits)) {
+		/* Only decrypt if current call is encrypted */
+		int cur_encr2=0;
+		{ FILE *_sf=fopen("/tmp/current_call.txt","r"); int _ssi=0;
+		  if(_sf){fscanf(_sf,"%d %d",&_ssi,&cur_encr2);fclose(_sf);} }
+		if (cur_encr2 > 0 && get_voice_keystream(tcs,&tcd->time,ks,ks_num_bits)) {
 			uint16_t a;
 			int l=461;
 			a=0;
