@@ -48,7 +48,7 @@ static int last_encoption=0;
 static int last_seen_encryption=0;
 
 void send_encinfo(int send_anyway) {
-        char tmpstr[1024];
+        char tmpstr[4096];
         if ((!send_anyway)&&(tetra_hack_encoption==last_encoption)&&(tetra_hack_seen_encryptions== last_seen_encryption)) return;
 
         snprintf(tmpstr,sizeof(tmpstr)-1,"TETMON_begin FUNC:ENCINFO1 CRYPT:%i ENC:%2.2x RX:%i TETMON_end",tetra_hack_encoption,tetra_hack_seen_encryptions,tetra_hack_rxid);
@@ -117,8 +117,8 @@ static int rx_bcast(struct tetra_tmvsap_prim *tmvp, struct tetra_mac_state *tms)
 	memset(&sid, 0, sizeof(sid));
 	macpdu_decode_sysinfo(&sid, msg->l1h);
 	tmvp->u.unitdata.tdma_time.hn = sid.hyperframe_number;
-	/* BNCH always contains real HN (unlike SB1 which has CCK_ID when cck_valid_no_hf=1) */
-	tcs->hn = sid.hyperframe_number;
+	/* Only update HN from BNCH when cck_valid_no_hf=0 (field contains real HN, not CCK_ID) */
+	if (!sid.cck_valid_no_hf) tcs->hn = sid.hyperframe_number;
 
 	dl_freq = tetra_dl_carrier_hz(sid.freq_band,
 				      sid.main_carrier,
@@ -248,7 +248,7 @@ static int rx_resrc(struct tetra_tmvsap_prim *tmvp, struct tetra_mac_state *tms)
 
 	int tmplen;
 	int tmpval;
-	 char tmpstr[1380];
+	 char tmpstr[4096];
 
 
 	memset(&rsd, 0, sizeof(rsd));

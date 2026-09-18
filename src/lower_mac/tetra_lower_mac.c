@@ -167,7 +167,7 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 
 	struct msgb *msg;
 
-        unsigned char tmpstr[1380+20];
+        unsigned char tmpstr[4096+20];
 
         tetra_hack_packet_counter++;
         tetra_hack_packet_counter=tetra_hack_packet_counter%65536;
@@ -331,8 +331,7 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 		int ks_num_bits=2*137;
 		uint8_t ks[ks_num_bits];
 		/* Use encryption mode from call_recorder (telive D-SETUP ENCR field) */
-		{ static int cur_encr = 0; FILE *_sf = fopen("/tmp/current_call.txt","r"); int _ssi=0; if(_sf){fscanf(_sf,"%d %d",&_ssi,&cur_encr);fclose(_sf);}
-		if (cur_encr > 0 && get_voice_keystream(tcs,&tcd->time,ks,ks_num_bits)) {
+		if (get_voice_keystream(tcs,&tcd->time,ks,ks_num_bits)) {
 			uint16_t a;
 			int l=461;
 			a=0;
@@ -370,9 +369,8 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 			}
 			strcat(gg,"\n\n\n");
 			fprintf(stderr,"%s",gg);
-			}	
-		}
-
+			}
+		/* dumpdir still inside is_traffic */
 		if (tms->dumpdir) {
 		/* Open per-call file based on active SSI from call_recorder */
 		{
