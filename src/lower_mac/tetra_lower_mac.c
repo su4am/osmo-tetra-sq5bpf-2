@@ -337,6 +337,7 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 		    _lt=_nt; FILE *_sf=fopen("/tmp/current_call.txt","r");
 		    if(_sf){int _s=0; fscanf(_sf,"%d %d",&_s,&_enc); fclose(_sf);}}
 		  if(_enc==0) goto skip_ks; }
+		tcs->ssi = tms->ssi; /* set current SSI for key selection */
 		if (get_voice_keystream(tcs,&tcd->time,ks,ks_num_bits)) {
 			uint16_t a;
 			int l=461;

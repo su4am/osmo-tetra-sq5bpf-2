@@ -55,7 +55,7 @@ int tetra_burst_sync_in(struct tetra_rx_state *trs, uint8_t *bits, unsigned int 
 {
 	int rc;
 	unsigned int train_seq_offs;
-	char tmpstr[1380];
+	char tmpstr[4096];
 
 	DEBUGP("burst_sync_in: %u bits, state %u\n", len, trs->state);
 

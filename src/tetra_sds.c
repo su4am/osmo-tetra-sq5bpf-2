@@ -107,7 +107,7 @@ unsigned int parse_d_sds_data(struct tetra_mac_state *tms, struct msgb *msg, uns
 	uint8_t reserved1;
 	uint8_t coding_scheme;
 	char descr[4096];
-	char tmpstr[128];
+	char tmpstr[4096];
 	char tmpstr2[1024];
 	int is_sdstl=0;
 	uint8_t  message_type;
@@ -546,7 +546,7 @@ int decode_lip(char *out, int outlen,uint8_t *bits,int datalen)
 	uint8_t lip_pdu_resultcode;
 	uint8_t lip_pdu_minrepinterval;
 	uint8_t lip_pdu_reporttype;
-	char tmpstr[1024];
+	char tmpstr[4096];
 	char tmpstr2[128];
 	uint32_t lip_pdu_timedatae;
 	uint8_t lip_pdu_timedata;

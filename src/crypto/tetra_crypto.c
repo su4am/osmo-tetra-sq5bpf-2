@@ -269,15 +269,20 @@ bool get_voice_keystream(struct tetra_crypto_state *tcs, struct tetra_tdma_time 
 	if (tcs->cn < 0 || tcs->la < 0 || tcs->cc < 0)
 		return false;
 
-	/* Try all matching keys until one works */
-	for (int i = 0; i < tcdb->num_keys; i++) {
-		struct tetra_key *key = &tcdb->keys[i];
-		if (key->mcc != tcs->mcc || key->mnc != tcs->mnc || key->key_num != tcs->cck_id)
-			continue;
-		if (key->key_type != KEYTYPE_CCK_SCK && key->key_type != KEYTYPE_SHORT32)
-			continue;
-		if (generate_keystream(tcs, key, tdma_time, ks_num_bits, ks))
-			return true;
+	/* Try SSI-specific key first, then broadcast keys */
+	for (int pass = 0; pass < 2; pass++) {
+		for (int i = 0; i < tcdb->num_keys; i++) {
+			struct tetra_key *key = &tcdb->keys[i];
+			if (key->mcc != tcs->mcc || key->mnc != tcs->mnc || key->key_num != tcs->cck_id)
+				continue;
+			if (key->key_type != KEYTYPE_CCK_SCK && key->key_type != KEYTYPE_SHORT32)
+				continue;
+			if (pass == 0 && key->addr == 0) continue;  /* pass 0: SSI-specific only */
+			if (pass == 0 && key->addr != tcs->ssi) continue; /* wrong SSI */
+			if (pass == 1 && key->addr != 0) continue;  /* pass 1: broadcast only */
+			if (generate_keystream(tcs, key, tdma_time, ks_num_bits, ks))
+				return true;
+		}
 	}
 	return false;
 }
@@ -413,7 +418,7 @@ int load_keystore(char *tetra_keyfile)
 
 struct tetra_key *get_key_by_addr(struct tetra_crypto_state *tcs, int addr, enum tetra_key_type key_type)
 {
-	        char tmpstr[1380];
+	        char tmpstr[4096];
         sprintf(tmpstr,"TETMON_begin FUNC:CRYPTO_GET_KEY_BY_ADDR RX:%i ADDR:%i KEY_TYPE:%i TETMON_end",tetra_hack_rxid,addr,key_type);
         sendto(tetra_hack_live_socket, (char *)&tmpstr, 128, 0, (struct sockaddr *)&tetra_hack_live_sockaddr, tetra_hack_socklen);
 
@@ -440,7 +445,7 @@ struct tetra_key *get_ksg_key(struct tetra_crypto_state *tcs, int addr)
 	Class 3:	+	+	?	+
 	--------------------------------------------
 	*/
-        char tmpstr[1380];
+        char tmpstr[4096];
         sprintf(tmpstr,"TETMON_begin FUNC:GET_KSG_KEY RX:%i ADDR:%i TETMON_end",tetra_hack_rxid,addr);
         sendto(tetra_hack_live_socket, (char *)&tmpstr, 128, 0, (struct sockaddr *)&tetra_hack_live_sockaddr, tetra_hack_socklen);
 

@@ -466,7 +466,7 @@ int rx_tl_sdu(struct tetra_mac_state *tms, struct msgb *msg, unsigned int len)
 {
 	uint8_t *bits = msg->l3h;
 	uint8_t mle_pdisc = bits_to_uint(bits, 3);
-	char tmpstr[1024];
+	char tmpstr[4096];
 	int ok=1;
 
 	printf("TL-SDU(%s): %s ", tetra_get_mle_pdisc_name(mle_pdisc),
