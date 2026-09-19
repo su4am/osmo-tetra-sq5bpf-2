@@ -330,15 +330,8 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 		/* this requires a patched tetra codec from here: https://github.com/sq5bpf/install-tetra-codec */
 		int ks_num_bits=2*137;
 		uint8_t ks[ks_num_bits];
-		/* Use frame-level encryption: ACCESS-ASSIGN + current call state */
-		{ static int _ce=0;
-		  static struct timespec _lt={0}; struct timespec _nt;
-		  clock_gettime(CLOCK_MONOTONIC,&_nt);
-		  if((_nt.tv_sec-_lt.tv_sec)*1000+(_nt.tv_nsec-_lt.tv_nsec)/1000000>=200){
-		    _lt=_nt; FILE *_sf=fopen("/tmp/current_call.txt","r"); int _s=0;
-		    if(_sf){fscanf(_sf,"%d %d",&_s,&_ce);fclose(_sf);} }
-		  /* Skip if BOTH ACCESS-ASSIGN AND current_call say unencrypted */
-		  if (!tms->voice_encr && !_ce) goto skip_ks; }
+		/* Use frame-level encryption mode from ACCESS-ASSIGN */
+		if (!tms->voice_encr) goto skip_ks;
 		tcs->ssi = tms->ssi; /* set current SSI for key selection */
 		if (get_voice_keystream(tcs,&tcd->time,ks,ks_num_bits)) {
 			uint16_t a;
