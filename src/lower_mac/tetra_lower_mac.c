@@ -332,6 +332,7 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 		uint8_t ks[ks_num_bits];
 		/* Use encryption mode from call_recorder (telive D-SETUP ENCR field) */
 		/* Only decrypt if current call is encrypted */
+		tcs->ssi = tms->ssi;
 		if (get_voice_keystream(tcs,&tcd->time,ks,ks_num_bits)) {
 			uint16_t a;
 			int l=461;

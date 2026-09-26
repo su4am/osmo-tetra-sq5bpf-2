@@ -269,15 +269,20 @@ bool get_voice_keystream(struct tetra_crypto_state *tcs, struct tetra_tdma_time 
 	if (tcs->cn < 0 || tcs->la < 0 || tcs->cc < 0)
 		return false;
 
-	/* Try all matching keys until one works */
-	for (int i = 0; i < tcdb->num_keys; i++) {
-		struct tetra_key *key = &tcdb->keys[i];
-		if (key->mcc != tcs->mcc || key->mnc != tcs->mnc || key->key_num != tcs->cck_id)
-			continue;
-		if (key->key_type != KEYTYPE_CCK_SCK && key->key_type != KEYTYPE_SHORT32)
-			continue;
-		if (generate_keystream(tcs, key, tdma_time, ks_num_bits, ks))
-			return true;
+	/* Pass 0: try SSI-specific key, Pass 1: try broadcast keys */
+	for (int pass = 0; pass < 2; pass++) {
+		for (int i = 0; i < tcdb->num_keys; i++) {
+			struct tetra_key *key = &tcdb->keys[i];
+			if (key->mcc != tcs->mcc || key->mnc != tcs->mnc || key->key_num != tcs->cck_id)
+				continue;
+			if (key->key_type != KEYTYPE_CCK_SCK && key->key_type != KEYTYPE_SHORT32)
+				continue;
+			if (pass == 0 && key->addr == 0) continue; /* skip broadcast in pass 0 */
+			if (pass == 0 && key->addr != tcs->ssi) continue; /* wrong SSI */
+			if (pass == 1 && key->addr != 0) continue; /* skip SSI-specific in pass 1 */
+			if (generate_keystream(tcs, key, tdma_time, ks_num_bits, ks))
+				return true;
+		}
 	}
 	return false;
 }
