@@ -98,7 +98,6 @@ struct tetra_crypto_state {
 	int la;				/* location area for TB5 */
 	int cn;				/* carrier number for TB5. WARNING: only set correctly if tuned to main control channel */
 	int cc;				/* colour code for TB5 */
-	int ssi;			/* current SSI for key selection */
 	struct tetra_netinfo *network;	/* pointer to network info struct loaded from file */
 	struct tetra_key *cck;		/* pointer to CCK or SCK for this network and version (from SYSINFO) */
 };
