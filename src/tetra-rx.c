@@ -209,6 +209,11 @@ int main(int argc, char **argv)
                 tetra_hack_socklen=sizeof(struct sockaddr_in);
                 tetra_hack_live_sockaddr.sin_family = AF_INET;
                 tetra_hack_live_sockaddr.sin_port = htons(atoi(getenv("TETRA_HACK_PORT")));
+                /* Second telive on port+1 for unencrypted monitor */
+                tetra_hack_live_socket2=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+                tetra_hack_live_sockaddr2.sin_family = AF_INET;
+                tetra_hack_live_sockaddr2.sin_port = htons(atoi(getenv("TETRA_HACK_PORT"))+1);
+                tetra_hack_live_sockaddr2.sin_addr.s_addr = inet_addr(getenv("TETRA_HACK_IP") ? getenv("TETRA_HACK_IP") : "127.0.0.1");
                 tmphost=getenv("TETRA_HACK_IP");
                 if (!tmphost) {
                         tmphost="127.0.0.1";

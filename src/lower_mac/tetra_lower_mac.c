@@ -422,11 +422,19 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 		}
 
                 /* send voice frames - only when encrypted call active */
+                /* Send decrypted to port (telive-1: encrypted monitor) */
                 if (tetra_hack_live_socket && decrypted) {
                         sprintf(tmpstr,"TRA:%2.2x RX:%2.2x DECR:%i\0",tms->cur_burst.is_traffic,tetra_hack_rxid,decrypted);
                         memcpy(tmpstr+20,block,sizeof(block));
 
                         sendto(tetra_hack_live_socket, (char *)&tmpstr, sizeof(block)+20, 0, (struct sockaddr *)&tetra_hack_live_sockaddr, tetra_hack_socklen);
+
+                }
+                /* Send ALL frames to port+1 (telive-2: unencrypted monitor) */
+                if (tetra_hack_live_socket2 && !tms->voice_encr) {
+                        sprintf(tmpstr,"TRA:%2.2x RX:%2.2x DECR:0\0",tms->cur_burst.is_traffic,tetra_hack_rxid);
+                        memcpy(tmpstr+20,block,sizeof(block));
+                        sendto(tetra_hack_live_socket2, (char *)&tmpstr, sizeof(block)+20, 0, (struct sockaddr *)&tetra_hack_live_sockaddr2, tetra_hack_socklen);
 
                 }
 

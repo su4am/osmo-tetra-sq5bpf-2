@@ -67,6 +67,8 @@ extern struct  tetra_hack_struct tetra_hack_db[HACK_NUM_STRUCTS];
 extern int tetra_hack_live_socket;
 extern struct sockaddr_in tetra_hack_live_sockaddr;
 extern int tetra_hack_socklen;
+extern int tetra_hack_live_socket2;
+extern struct sockaddr_in tetra_hack_live_sockaddr2;
 
 extern int tetra_hack_live_idx;
 extern int tetra_hack_live_lastseen;

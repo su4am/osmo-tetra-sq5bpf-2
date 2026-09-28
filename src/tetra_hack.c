@@ -7,6 +7,10 @@ int tetra_hack_live_socket;
 struct sockaddr_in tetra_hack_live_sockaddr;
 int tetra_hack_socklen;
 
+/* Second telive instance (unencrypted monitor) */
+int tetra_hack_live_socket2;
+struct sockaddr_in tetra_hack_live_sockaddr2;
+
 int tetra_hack_live_idx;
 int tetra_hack_live_lastseen;
 int tetra_hack_rxid;
