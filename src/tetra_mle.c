@@ -7,6 +7,7 @@
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/bits.h>
 #include <osmocom/core/utils.h>
+#include "tetra_common.h"
 
 #include "tetra_mle_pdu.h"
 #include "tetra_mle.h"
@@ -75,6 +76,7 @@ int parse_d_status(struct tetra_mac_state *tms, struct msgb *msg, unsigned int l
 
 	sprintf(tmpstr2,"TETMON_begin FUNC:DSTATUSDEC SSI:%i SSI2:%i STATUS:%i RX:%i TETMON_end",rsd.addr.ssi,callingssi,precoded_status,tetra_hack_rxid);
 	sendto(tetra_hack_live_socket, (char *)&tmpstr2, strlen((char *)&tmpstr2)+1, 0, (struct sockaddr *)&tetra_hack_live_sockaddr, tetra_hack_socklen);
+	if (tetra_hack_live_socket2) sendto(tetra_hack_live_socket2, (char *)&tmpstr2, strlen((char *)&tmpstr2)+1, 0, (struct sockaddr *)&tetra_hack_live_sockaddr2, tetra_hack_socklen);
 
 }
 
@@ -100,6 +102,7 @@ int parse_d_release(struct tetra_mac_state *tms, struct msgb *msg, unsigned int 
 	printf("\nCall identifier:%i Discconnect cause:%i NotificationID:%i (%s)\n",callident,disccause,notifindic,nis);
 	sprintf(tmpstr2,"TETMON_begin FUNC:DRELEASEDEC SSI:%i CID:%i NID:%i [%s] RX:%i TETMON_end",rsd.addr.ssi,callident, notifindic,nis,tetra_hack_rxid);
 	sendto(tetra_hack_live_socket, (char *)&tmpstr2, strlen((char *)&tmpstr2)+1, 0, (struct sockaddr *)&tetra_hack_live_sockaddr, tetra_hack_socklen);
+	if (tetra_hack_live_socket2) sendto(tetra_hack_live_socket2, (char *)&tmpstr2, strlen((char *)&tmpstr2)+1, 0, (struct sockaddr *)&tetra_hack_live_sockaddr2, tetra_hack_socklen);
 
 }
 
@@ -163,6 +166,7 @@ int parse_d_connect(struct tetra_mac_state *tms, struct msgb *msg, unsigned int 
 	sprintf(buf2," RX:%i TETMON_end",tetra_hack_rxid);
 	strcat(buf,buf2);
 	sendto(tetra_hack_live_socket, (char *)&buf, strlen((char *)&buf)+1, 0, (struct sockaddr *)&tetra_hack_live_sockaddr, tetra_hack_socklen);
+	if (tetra_hack_live_socket2) sendto(tetra_hack_live_socket2, (char *)&buf, strlen((char *)&buf)+1, 0, (struct sockaddr *)&tetra_hack_live_sockaddr2, tetra_hack_socklen);
 
 }
 
@@ -238,6 +242,7 @@ int parse_d_txgranted(struct tetra_mac_state *tms, struct msgb *msg, unsigned in
 	sprintf(buf2," RX:%i TETMON_end",tetra_hack_rxid);
 	strcat(buf,buf2);
 	sendto(tetra_hack_live_socket, (char *)&buf, strlen((char *)&buf)+1, 0, (struct sockaddr *)&tetra_hack_live_sockaddr, tetra_hack_socklen);
+	if (tetra_hack_live_socket2) sendto(tetra_hack_live_socket2, (char *)&buf, strlen((char *)&buf)+1, 0, (struct sockaddr *)&tetra_hack_live_sockaddr2, tetra_hack_socklen);
 }
 
 
@@ -309,6 +314,7 @@ uint parse_d_setup(struct tetra_mac_state *tms, struct msgb *msg, unsigned int l
 
 	sprintf(tmpstr2,"TETMON_begin FUNC:DSETUPDEC IDX:%i SSI:%i SSI2:%i CID:%i NID:%i RX:%i TETMON_end",rsd.addr.usage_marker,rsd.addr.ssi,callingssi,callident,notifindic,tetra_hack_rxid);
 	sendto(tetra_hack_live_socket, (char *)&tmpstr2, strlen((char *)&tmpstr2)+1, 0, (struct sockaddr *)&tetra_hack_live_sockaddr, tetra_hack_socklen);
+	if (tetra_hack_live_socket2) sendto(tetra_hack_live_socket2, (char *)&tmpstr2, strlen((char *)&tmpstr2)+1, 0, (struct sockaddr *)&tetra_hack_live_sockaddr2, tetra_hack_socklen);
 }
 
 /* decode 18.5.17 Neighbour cell information for CA */
@@ -408,6 +414,7 @@ int parse_nci_ca( uint8_t *bits)
 	sprintf(buf2," RX:%i TETMON_end",tetra_hack_rxid);
 	strcat(freqinfo,buf2);
 	sendto(tetra_hack_live_socket, (char *)&freqinfo, 128, 0, (struct sockaddr *)&tetra_hack_live_sockaddr, tetra_hack_socklen);
+	if (tetra_hack_live_socket2) sendto(tetra_hack_live_socket2, (char *)&freqinfo, 128, 0, (struct sockaddr *)&tetra_hack_live_sockaddr2, tetra_hack_socklen);
 
 	return(n);
 }
@@ -583,6 +590,7 @@ int rx_tl_sdu(struct tetra_mac_state *tms, struct msgb *msg, unsigned int len)
 						    case TCMCE_PDU_T_D_SDS_DATA:
 							    sprintf(tmpstr,"TETMON_begin FUNC:SDS [%s] TETMON_end",osmo_ubit_dump(bits, len));
 							    sendto(tetra_hack_live_socket, (char *)&tmpstr, strlen((char *)&tmpstr)+1, 0, (struct sockaddr *)&tetra_hack_live_sockaddr, tetra_hack_socklen);
+	if (tetra_hack_live_socket2) sendto(tetra_hack_live_socket2, (char *)&tmpstr, strlen((char *)&tmpstr)+1, 0, (struct sockaddr *)&tetra_hack_live_sockaddr2, tetra_hack_socklen);
 							    parse_d_sds_data(tms,msg,len);
 							    break;
 
