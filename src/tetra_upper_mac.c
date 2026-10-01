@@ -226,6 +226,7 @@ char freqinfo[128];
                         case 3: /* uplink + downlink */
                                 sprintf(freqinfo,"TETMON_begin FUNC:FREQINFO2 DLF:%i RX:%i TETMON_end",tetra_dl_carrier_hz(freq_band, cad->carrier_nr, freq_offset),tetra_hack_rxid);
                                 sendto(tetra_hack_live_socket, (char *)&freqinfo, 128, 0, (struct sockaddr *)&tetra_hack_live_sockaddr, tetra_hack_socklen);
+                                if (tetra_hack_live_socket2) sendto(tetra_hack_live_socket2, (char *)&freqinfo, 128, 0, (struct sockaddr *)&tetra_hack_live_sockaddr2, tetra_hack_socklen);
                                 break;
 
                         default:
@@ -327,6 +328,8 @@ static int rx_resrc(struct tetra_tmvsap_prim *tmvp, struct tetra_mac_state *tms)
 	}
 	tms->ssi = rsd.addr.ssi;
 	tms->voice_encr = rsd.encryption_mode;
+	if (rsd.addr.usage_marker >= 1 && rsd.addr.usage_marker < 64)
+		tms->voice_encr_idx[rsd.addr.usage_marker] = rsd.encryption_mode;
 	tms->usage_marker = rsd.addr.usage_marker;
 	tms->addr_type = rsd.addr.type;
 
@@ -401,6 +404,7 @@ out:
                                 sprintf(tmpstr,"TETMON_begin FUNC:%s SSI:%8.8i IDX:%3.3i IDT:%i ENCR:%i RX:%i TETMON_end",tetra_get_cmce_pdut_name(req_type, 0),rsd.addr.ssi,rsd.addr.usage_marker,rsd.addr.type,rsd.encryption_mode,tetra_hack_rxid);
 
                                 sendto(tetra_hack_live_socket, (char *)&tmpstr, 128, 0, (struct sockaddr *)&tetra_hack_live_sockaddr, tetra_hack_socklen);
+                                if (tetra_hack_live_socket2 && rsd.encryption_mode == 0) sendto(tetra_hack_live_socket2, (char *)&tmpstr, 128, 0, (struct sockaddr *)&tetra_hack_live_sockaddr2, tetra_hack_socklen);
                                 //printf("\nSQ5BPF KOMUNIKAT: [%s]\n",tmpstr);
                         }
                 }

@@ -280,10 +280,14 @@ bool get_voice_keystream(struct tetra_crypto_state *tcs, struct tetra_tdma_time 
 			if (pass == 0 && key->addr == 0) continue; /* skip broadcast in pass 0 */
 			if (pass == 0 && key->addr != tcs->ssi) continue; /* wrong SSI */
 			if (pass == 1 && key->addr != 0) continue; /* skip SSI-specific in pass 1 */
-			if (generate_keystream(tcs, key, tdma_time, ks_num_bits, ks))
+			if (generate_keystream(tcs, key, tdma_time, ks_num_bits, ks)) {
+				uint32_t k=(key->key[0]<<24)|(key->key[1]<<16)|(key->key[2]<<8)|key->key[3];
+				printf("SQ5BPF: TEA1 voice decrypted SSI:%d key:%08x addr:%d pass:%d\n",tcs->ssi,k,key->addr,pass);
 				return true;
+			}
 		}
 	}
+	printf("SQ5BPF: TEA1 voice FAILED SSI:%d - no key\n",tcs->ssi);
 	return false;
 }
 

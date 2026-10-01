@@ -334,7 +334,12 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 		/* Use encryption mode from call_recorder (telive D-SETUP ENCR field) */
 		/* Only decrypt if current call is encrypted */
 		tcs->ssi = tms->ssi;
-		if (get_voice_keystream(tcs,&tcd->time,ks,ks_num_bits)) {
+		{ int _idx=tms->cur_burst.is_traffic;
+		  int _ie=(_idx>0&&_idx<64)?tms->voice_encr_idx[_idx]:tms->voice_encr;
+		  if (_ie==0 && tms->ssi>0 && tms->ssi!=0xFFFFFF) {
+			/* ENCR:0 - zero keystream block, do NOT set decrypted (goes to 7380 only) */
+			int _zi; for(_zi=461;_zi<461+69;_zi++) block[_zi]=0;
+		  } else if (get_voice_keystream(tcs,&tcd->time,ks,ks_num_bits)) {
 			uint16_t a;
 			int l=461;
 			a=0;
@@ -353,7 +358,7 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 			block[l]=a;
 
 			decrypted=1;
-		}
+		  } }
 
 			/* for debugging, change the if(0) to whatever you want to dump --sq5bpf */
 			if (0) {
@@ -432,12 +437,14 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 
                 }
                 /* Send ALL frames to port+1 (telive-2: unencrypted monitor) */
-                if (tetra_hack_live_socket2 && !tms->voice_encr && tms->ssi > 0 && tetra_hack_rxid == 2) {
-                        sprintf(tmpstr,"TRA:%2.2x RX:%2.2x DECR:0\0",tms->cur_burst.is_traffic,tetra_hack_rxid);
+                { int _idx=tms->cur_burst.is_traffic;
+                  int _idx_encr=(_idx>0&&_idx<64)?tms->voice_encr_idx[_idx]:tms->voice_encr;
+                if (tetra_hack_live_socket2 && _idx_encr==0 && tms->ssi > 0) {
+                        sprintf(tmpstr,"TRA:%2.2x RX:%2.2x DECR:1\0",tms->cur_burst.is_traffic,tetra_hack_rxid);
                         memcpy(tmpstr+20,block,sizeof(block));
                         sendto(tetra_hack_live_socket2, (char *)&tmpstr, sizeof(block)+20, 0, (struct sockaddr *)&tetra_hack_live_sockaddr2, tetra_hack_socklen);
 
-                }
+                } }
 
 		goto out;
 	}
