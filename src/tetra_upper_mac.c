@@ -328,8 +328,10 @@ static int rx_resrc(struct tetra_tmvsap_prim *tmvp, struct tetra_mac_state *tms)
 	}
 	tms->ssi = rsd.addr.ssi;
 	tms->voice_encr = rsd.encryption_mode;
-	if (rsd.addr.usage_marker >= 1 && rsd.addr.usage_marker < 64)
+	if (rsd.addr.usage_marker >= 1 && rsd.addr.usage_marker < 64) {
 		tms->voice_encr_idx[rsd.addr.usage_marker] = rsd.encryption_mode;
+		tms->ssi_idx[rsd.addr.usage_marker] = rsd.addr.ssi;
+	}
 	tms->usage_marker = rsd.addr.usage_marker;
 	tms->addr_type = rsd.addr.type;
 

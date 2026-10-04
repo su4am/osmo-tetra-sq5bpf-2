@@ -333,7 +333,8 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 		uint8_t ks[ks_num_bits];
 		/* Use encryption mode from call_recorder (telive D-SETUP ENCR field) */
 		/* Only decrypt if current call is encrypted */
-		tcs->ssi = tms->ssi;
+		{ int _si=tms->cur_burst.is_traffic;
+		  tcs->ssi = (_si>0&&_si<64&&tms->ssi_idx[_si]>0) ? tms->ssi_idx[_si] : tms->ssi; }
 		{ int _idx=tms->cur_burst.is_traffic;
 		  int _ie=(_idx>0&&_idx<64)?tms->voice_encr_idx[_idx]:tms->voice_encr;
 		  if (_ie==0 && tms->ssi>0 && tms->ssi!=0xFFFFFF) {

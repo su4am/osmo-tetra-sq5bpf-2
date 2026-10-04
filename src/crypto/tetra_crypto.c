@@ -269,14 +269,22 @@ bool get_voice_keystream(struct tetra_crypto_state *tcs, struct tetra_tdma_time 
 	if (tcs->cn < 0 || tcs->la < 0 || tcs->cc < 0)
 		return false;
 
-	/* Pass -1: try cell-specific key from cell_keys.txt (CN+LA+CC match) */
+	/* Pass 0: SSI-specific keys first (individual direct calls) */
+	for (int i = 0; i < tcdb->num_keys; i++) {
+		struct tetra_key *key = &tcdb->keys[i];
+		if (key->mcc != tcs->mcc || key->mnc != tcs->mnc || key->key_num != tcs->cck_id) continue;
+		if (key->key_type != KEYTYPE_CCK_SCK && key->key_type != KEYTYPE_SHORT32) continue;
+		if (key->addr == 0) continue; /* skip broadcast in pass 0 */
+		if (key->addr != tcs->ssi) continue; /* wrong SSI */
+		if (generate_keystream(tcs, key, tdma_time, ks_num_bits, ks)) return true;
+	}
+	/* Pass 1: cell-specific broadcast key from cell_keys.txt (CN+LA+CC match) */
 	{
 		FILE *_ck = fopen("/home/ahmed/TETRA_crypto/cell_keys.txt","r");
 		if (_ck) {
 			int _cn,_la,_cc; char _key[32];
 			while(fscanf(_ck,"%d %d %d %s",&_cn,&_la,&_cc,_key)==4) {
 				if (_cn==tcs->cn && _la==tcs->la && _cc==tcs->cc) {
-					/* Found cell-specific key — try it first */
 					for (int i=0;i<tcdb->num_keys;i++) {
 						struct tetra_key *key=&tcdb->keys[i];
 						char kh[16]; snprintf(kh,16,"%08X",
@@ -292,7 +300,7 @@ bool get_voice_keystream(struct tetra_crypto_state *tcs, struct tetra_tdma_time 
 			fclose(_ck);
 		}
 	}
-	/* Pass 0: try SSI-specific key, Pass 1: try broadcast keys */
+	/* Pass 2: broadcast keys in file order (fallback) */
 	for (int pass = 0; pass < 2; pass++) {
 		for (int i = 0; i < tcdb->num_keys; i++) {
 			struct tetra_key *key = &tcdb->keys[i];

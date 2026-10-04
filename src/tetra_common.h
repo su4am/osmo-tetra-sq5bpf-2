@@ -122,6 +122,7 @@ struct tetra_mac_state {
 	int addr_type;
 	int voice_encr; /* 0=plain, 2=TEA1 encrypted */
 	int voice_encr_idx[64]; /* per-usage-marker encryption state */
+	uint32_t ssi_idx[64];    /* per-usage-marker SSI */
 };
 
 void tetra_mac_state_init(struct tetra_mac_state *tms);
