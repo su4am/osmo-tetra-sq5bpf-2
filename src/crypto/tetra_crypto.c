@@ -269,13 +269,12 @@ bool get_voice_keystream(struct tetra_crypto_state *tcs, struct tetra_tdma_time 
 	if (tcs->cn < 0 || tcs->la < 0 || tcs->cc < 0)
 		return false;
 
-	/* Pass 0: SSI-specific keys first (individual direct calls) */
+	/* Pass 0: SSI-specific cracked keys — addr is the unique identifier, no CCK version needed */
 	for (int i = 0; i < tcdb->num_keys; i++) {
 		struct tetra_key *key = &tcdb->keys[i];
-		if (key->mcc != tcs->mcc || key->mnc != tcs->mnc || key->key_num != tcs->cck_id) continue;
+		if (key->addr == 0) continue;                                       /* skip broadcast */
+		if (key->addr != (uint32_t)tcs->ssi) continue;                     /* wrong SSI */
 		if (key->key_type != KEYTYPE_CCK_SCK && key->key_type != KEYTYPE_SHORT32) continue;
-		if (key->addr == 0) continue; /* skip broadcast in pass 0 */
-		if (key->addr != tcs->ssi) continue; /* wrong SSI */
 		if (generate_keystream(tcs, key, tdma_time, ks_num_bits, ks)) return true;
 	}
 
