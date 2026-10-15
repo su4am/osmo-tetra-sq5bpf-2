@@ -337,6 +337,7 @@ void tp_sap_udata_ind(enum tp_sap_data_type type, int blk_num, const uint8_t *bi
 		  tcs->ssi = (_si>0&&_si<64&&tms->ssi_idx[_si]>0) ? tms->ssi_idx[_si] : tms->ssi; }
 		{ int _idx=tms->cur_burst.is_traffic;
 		  int _ie=(_idx>0&&_idx<64)?tms->voice_encr_idx[_idx]:tms->voice_encr;
+			  if (tms->voice_encr==0) _ie=0; /* frame=ENCR:0 overrides stale UM state */
 		  if (_ie==0 && tms->ssi>0 && tms->ssi!=0xFFFFFF) {
 			/* ENCR:0 - zero keystream block, do NOT set decrypted (goes to 7380 only) */
 			int _zi; for(_zi=461;_zi<461+69;_zi++) block[_zi]=0;

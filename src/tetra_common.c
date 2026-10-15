@@ -129,5 +129,5 @@ void tetra_mac_state_init(struct tetra_mac_state *tms)
 {
 	INIT_LLIST_HEAD(&tms->voice_channels);
 	/* Default all IDXes to encrypted (2) until ACCESS-ASSIGN says otherwise */
-	memset(tms->voice_encr_idx, 2, sizeof(tms->voice_encr_idx));
+	memset(tms->voice_encr_idx, 0, sizeof(tms->voice_encr_idx));
 }
