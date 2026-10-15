@@ -301,7 +301,8 @@ bool get_voice_keystream(struct tetra_crypto_state *tcs, struct tetra_tdma_time 
 
 	/* Pass 1: cell-specific broadcast key from cell_keys.txt (CN+LA+CC match) */
 	{
-		FILE *_ck = fopen("/home/ahmed/TETRA_crypto/cell_keys.txt","r");
+		const char *_ck_path = getenv("TETRA_CELL_KEYS");
+		FILE *_ck = _ck_path ? fopen(_ck_path,"r") : NULL;
 		if (_ck) {
 			int _cn,_la,_cc; char _key[32];
 			while(fscanf(_ck,"%d %d %d %s",&_cn,&_la,&_cc,_key)==4) {

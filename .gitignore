@@ -1,0 +1,64 @@
+# Build outputs
+src/tetra-rx
+src/float_to_bits
+src/conv_enc_test
+*.o
+*.a
+*.la
+*.lo
+.libs/
+autom4te.cache/
+config.log
+config.status
+configure
+Makefile
+Makefile.in
+aclocal.m4
+compile
+depcomp
+install-sh
+ltmain.sh
+missing
+*.pc
+
+# Local operational config — NEVER commit these
+TETRA_crypto/keyfile.txt
+TETRA_crypto/cell_keys.txt
+TETRA_crypto/ctrl_keyfile.txt
+TETRA_crypto/known_ssis.txt
+TETRA_crypto/run_ch0.sh
+TETRA_crypto/run_ch1.sh
+TETRA_crypto/run_ch2.sh
+TETRA_crypto/run_ch3.sh
+TETRA_crypto/run_ch4.sh
+TETRA_crypto/run_ch5.sh
+TETRA_crypto/run_ch6.sh
+TETRA_crypto/run_ch7.sh
+TETRA_crypto/run_ch8.sh
+TETRA_crypto/run_ch9.sh
+TETRA_crypto/run_ch10.sh
+TETRA_crypto/rxx_ch*.sh
+TETRA_crypto/tetrad_ch*.sh
+TETRA_crypto/rsp1a_*.py
+
+# Runtime data
+/tmp/candidates.txt
+/tmp/ch*_cand_*
+*.bits
+*.float
+*.cfile
+
+# Scan results (contain real frequencies, MCC, MNC, LA)
+src/tetra_carriers_*.txt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.eggs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*~
