@@ -278,6 +278,28 @@ bool get_voice_keystream(struct tetra_crypto_state *tcs, struct tetra_tdma_time 
 		if (key->addr != tcs->ssi) continue; /* wrong SSI */
 		if (generate_keystream(tcs, key, tdma_time, ks_num_bits, ks)) return true;
 	}
+
+	/* One-time alert: SSI active on air with no individual key in keyfile */
+	if (tcs->ssi > 0) {
+		static uint32_t _nokey_seen[512];
+		static int      _nokey_cnt = 0;
+		int _found = 0;
+		for (int _k = 0; _k < _nokey_cnt; _k++)
+			if (_nokey_seen[_k] == (uint32_t)tcs->ssi) { _found = 1; break; }
+		if (!_found) {
+			if (_nokey_cnt < 512)
+				_nokey_seen[_nokey_cnt++] = (uint32_t)tcs->ssi;
+			fprintf(stderr, "[NOKEY] SSI %u active on air -- no individual key in keyfile, GPU crack needed\n",
+				(uint32_t)tcs->ssi);
+			fflush(stderr);
+			FILE *_af = fopen("/tmp/no_key_alert.txt", "a");
+			if (_af) {
+				fprintf(_af, "%u\n", (uint32_t)tcs->ssi);
+				fclose(_af);
+			}
+		}
+	}
+
 	/* Pass 1: cell-specific broadcast key from cell_keys.txt (CN+LA+CC match) */
 	{
 		FILE *_ck = fopen("/home/ahmed/TETRA_crypto/cell_keys.txt","r");
@@ -517,7 +539,6 @@ void update_current_cck(struct tetra_crypto_state *tcs)
 
 	for (int i = 0; i < tcdb->num_keys; i++) {
 		struct tetra_key *key = &tcdb->keys[i];
-		printf("tetra_crypto: sq5bpf trying key i=%d mcc=%i mnc=%i cckid=%i\n", i,key->mcc,key->mnc,key->key_num); /* TODO: remove this */
 		/* TODO FIXME consider selecting CCK or SCK key type based on network config */
 		if (key->mcc == tcs->mcc && key->mnc == tcs->mnc && key->key_num == tcs->cck_id) {
 			if ((key->key_type == KEYTYPE_CCK_SCK)||(key->key_type == KEYTYPE_SHORT32)) {
